@@ -1,35 +1,51 @@
 # NORDVEX SCREENER PRO
 
-A market-intelligence workspace focused on MEXC Futures, with cross-exchange context, configurable screeners, derivatives analytics, narrative monitoring and user-defined alerts.
+A dark, multi-page market-intelligence workspace focused on MEXC Futures, with cross-exchange analytics, configurable screeners, derivatives diagnostics, narrative monitoring and ticker alerts.
 
-## Product principles
+## Repository layout
 
-- Data provenance is explicit: every metric records its source, timestamp and freshness.
-- Scores are analytical scores, not claims of guaranteed returns or calibrated win probabilities.
-- Missing or unsupported exchange metrics are shown as unavailable, never silently fabricated.
-- Exchange credentials remain server-side and are never exposed to the browser.
-- The application is read-only in its initial release; no order execution or trading keys are required.
+- `src/`: Next.js + TypeScript frontend.
+- `apps/api/`: FastAPI market-data service and MEXC public adapter.
+- PostgreSQL and Redis: local infrastructure declared in Docker Compose for persistence and streaming work.
 
-## Planned architecture
+## Frontend
 
-- `apps/web`: Next.js, TypeScript, Tailwind CSS and TradingView Lightweight Charts.
-- `apps/api`: FastAPI service, exchange adapters, metric calculations and WebSocket delivery.
-- `packages/contracts`: shared API/data contracts.
-- PostgreSQL: durable user settings, watchlists, alert rules and metric snapshots.
-- Redis: short-lived market state, pub/sub and rate-limit coordination.
+```bash
+npm install
+cp .env.example .env.local
+npm run dev
+```
 
-## Pages
+## API
 
-Overview, Crypto Bubbles, Multiple Charts, Screener Pro, Screener V1, Elite Hierarchy, Narrative Analysis, Notifications and Settings.
+```bash
+cd apps/api
+python -m venv .venv && source .venv/bin/activate
+pip install -e '.[dev]'
+cp .env.example .env
+uvicorn app.main:app --reload --port 8000
+```
 
-## Development
+## Implemented foundation
 
-The repository is being initialized in stages. Railway deployment is intentionally deferred until implementation, data validation, tests and security checks are complete.
+- Responsive dark workspace and independent pages: Overview, Crypto Bubbles, Multiple Charts, Screener Pro, Screener V1, Elite Hierarchy, Narrative Analysis, Notifications and Settings.
+- Public MEXC futures ticker adapter and screener API.
+- Explicit null handling for metrics that cannot yet be measured accurately.
+- Initial metric integrity test.
+- Environment templates and container build definitions.
 
-### Safety and data integrity
+## Next milestones
 
-Market indicators are informational tools, not financial advice. Open interest does not independently identify whether new positions are long or short. CVD requires trade-side classification from exchange trade streams. Liquidation density must be labeled as estimated unless backed by actual liquidation data. Directional scores must not be represented as probabilities until calibrated against out-of-sample historical results.
+1. Verify live MEXC response fields and contract metadata normalization.
+2. Add persistent historical candles, OI snapshots and comparable five-minute volume buckets.
+3. Add trade-stream CVD and supported liquidation-event adapters.
+4. Add Binance/Bybit adapters, cross-exchange basis and funding normalization.
+5. Add PostgreSQL models, Redis streaming, durable alert rules and notification delivery.
+6. Add backtesting, score calibration, observability and security hardening.
+7. Validate production deployment before Railway is configured.
 
-## Configuration
+## Data integrity and security
 
-Copy the relevant `.env.example` files to local environment files. Never commit API secrets, private keys, access tokens or production credentials.
+Open interest alone does not identify whether positions are long or short. RVOL must compare equivalent historical time blocks. CVD requires aggressor-side trade classification. Liquidation clusters must be labeled estimated unless backed by observed liquidation events. Scores are not probabilities until calibrated out of sample. No trading permissions or private exchange keys are needed for public market data. Never commit secrets.
+
+Market analytics are informational and are not financial advice.
