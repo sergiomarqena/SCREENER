@@ -47,7 +47,7 @@ class MarketStore:
             (row["symbol"], now, row["lastPrice"], row.get("change24h"),
              row.get("volume24h"), row.get("openInterest"), row.get("fundingRate"),
              row.get("high24h"), row.get("low24h"))
-            for row in rows
+            for row in rows[:100]
         ]
         async with self.pool.acquire() as conn:
             await conn.executemany("""
