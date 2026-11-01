@@ -1,22 +1,17 @@
 # NORDVEX SCREENER PRO
 
-A dark, multi-page market-intelligence workspace focused on MEXC Futures, with cross-exchange analytics, configurable screeners, derivatives diagnostics, narrative monitoring and ticker alerts.
+A dark, multi-page market-intelligence workspace with a Next.js frontend and a read-only FastAPI market-data service.
 
 ## Repository layout
 
 - `src/`: Next.js + TypeScript frontend.
 - `apps/api/`: FastAPI market-data service and MEXC public adapter.
-- PostgreSQL and Redis: local infrastructure declared in Docker Compose for persistence and streaming work.
+- PostgreSQL: durable, minute-bucketed market snapshots and history.
+- Docker Compose: local PostgreSQL/Redis development services.
 
-## Frontend
+## Local development
 
-```bash
-npm install
-cp .env.example .env.local
-npm run dev
-```
-
-## API
+Start the API:
 
 ```bash
 cd apps/api
@@ -26,26 +21,43 @@ cp .env.example .env
 uvicorn app.main:app --reload --port 8000
 ```
 
-## Implemented foundation
+Start the frontend in a second terminal:
 
-- Responsive dark workspace and independent pages: Overview, Crypto Bubbles, Multiple Charts, Screener Pro, Screener V1, Elite Hierarchy, Narrative Analysis, Notifications and Settings.
-- Public MEXC futures ticker adapter and screener API.
-- Explicit null handling for metrics that cannot yet be measured accurately.
-- Initial metric integrity test.
-- Environment templates and container build definitions.
+```bash
+npm install
+npm run dev
+```
 
-## Next milestones
+The Next.js API proxy uses `API_INTERNAL_URL` in hosted deployments and defaults to localhost for local development. For local browser requests, `src/lib/api.ts` can be configured with `NEXT_PUBLIC_API_URL=http://localhost:8000`.
 
-1. Verify live MEXC response fields and contract metadata normalization.
-2. Add persistent historical candles, OI snapshots and comparable five-minute volume buckets.
-3. Add trade-stream CVD and supported liquidation-event adapters.
-4. Add Binance/Bybit adapters, cross-exchange basis and funding normalization.
-5. Add PostgreSQL models, Redis streaming, durable alert rules and notification delivery.
-6. Add backtesting, score calibration, observability and security hardening.
-7. Validate production deployment before Railway is configured.
+## Production services
 
-## Data integrity and security
+Railway is prepared as three services in the existing Crypto-Vertex project:
 
-Open interest alone does not identify whether positions are long or short. RVOL must compare equivalent historical time blocks. CVD requires aggressor-side trade classification. Liquidation clusters must be labeled estimated unless backed by observed liquidation events. Scores are not probabilities until calibrated out of sample. No trading permissions or private exchange keys are needed for public market data. Never commit secrets.
+- `nordvex-web`: root Next.js Dockerfile.
+- `nordvex-api`: FastAPI Dockerfile with root directory `apps/api`.
+- `nordvex-postgres`: PostgreSQL 16 with a persistent mounted volume.
 
-Market analytics are informational and are not financial advice.
+The API uses Railway's private network to connect to PostgreSQL. The web service proxies browser market-data requests to the API over the private network, so the database and API do not need public exposure. API credentials are not required for public MEXC market endpoints. Optional provider keys should be added directly to Railway variables, never committed to Git.
+
+## Data persistence
+
+The API creates `market_snapshots` and its time index on startup. It records one row per symbol per UTC minute, exposes `GET /api/market/history/{symbol}`, and prunes records older than `SNAPSHOT_RETENTION_DAYS` (default 30). Missing metrics remain null rather than being fabricated.
+
+## Data integrity
+
+- Open interest alone does not identify whether positions are long or short.
+- RVOL requires comparable historical time buckets.
+- CVD requires aggressor-side trade classification.
+- Liquidation estimates must be distinguished from observed liquidation events.
+- A score is not a calibrated probability without out-of-sample validation.
+
+## Checks
+
+```bash
+npm run typecheck
+npm run build
+cd apps/api && pytest
+```
+
+Market analytics are informational. Public market data is read-only; no exchange order permissions are used.
