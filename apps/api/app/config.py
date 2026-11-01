@@ -8,7 +8,7 @@ class Settings(BaseSettings):
     database_url: str | None = None
     poll_interval_seconds: int = 8
     snapshot_interval_seconds: int = 60
-    snapshot_retention_days: int = 30
+    snapshot_retention_days: int = 7
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
     @property
