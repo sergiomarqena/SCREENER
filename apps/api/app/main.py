@@ -61,7 +61,7 @@ async def screener(limit:int=Query(100,ge=1,le=500),quote:str="USDT"):
             global_error=str(exc)[:240]
             return {"source":"MEXC Futures public contract API","status":"degraded","updatedAt":datetime.now(timezone.utc).isoformat(),"items":[],"warning":global_error}
     items=[row for row in market_rows if not quote or row["symbol"].endswith(quote)]
-    return {"source":"MEXC Futures public contract API","status":"live" if items else "degraded","updatedAt":last_update or datetime.now(timezone.utc).isoformat(),"items":items[:limit],"warning":last_error}
+    return {"source":"MEXC Futures public contract API","status":"live" if items and not last_error else "degraded","updatedAt":last_update or datetime.now(timezone.utc).isoformat(),"items":items[:limit],"warning":last_error}
 
 @app.get("/api/market/candles/{symbol}")
 async def candles(symbol:str,interval:str=Query("Min5",pattern="^(Min1|Min5|Min15|Min60|Hour4|Day1)$"),limit:int=Query(200,ge=30,le=500)):
