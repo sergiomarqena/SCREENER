@@ -47,10 +47,13 @@ async def refresh_market() -> None:
 
 
 async def market_poller() -> None:
-    global last_error
+    global last_error, database_error
     prune_counter = 0
     while True:
         try:
+            if store.enabled and not store.pool:
+                await store.connect()
+                database_error = None
             await refresh_market()
             prune_counter += 1
             if store.pool and prune_counter >= 60:
