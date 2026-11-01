@@ -42,7 +42,7 @@ The API uses Railway's private network to connect to PostgreSQL. The web service
 
 ## Data persistence
 
-The API creates `market_snapshots` and its time index on startup. It records one row per symbol per UTC minute, exposes `GET /api/market/history/{symbol}`, and prunes records older than `SNAPSHOT_RETENTION_DAYS` (default 30). Missing metrics remain null rather than being fabricated.
+The API creates `market_snapshots` and its time index on startup. It records one row per symbol per UTC minute, exposes `GET /api/market/history/{symbol}`, and stores the top 100 contracts per minute and prunes records older than `SNAPSHOT_RETENTION_DAYS` (default 7). Missing metrics remain null rather than being fabricated.
 
 ## Data integrity
 
