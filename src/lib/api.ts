@@ -1,7 +1,7 @@
 import type { MarketResponse } from "./types";
 
 const API = process.env.NEXT_PUBLIC_API_URL
-  ? `${process.env.NEXT_PUBLIC_API_URL.replace(/\\/$/, "")}/api`
+  ? `${process.env.NEXT_PUBLIC_API_URL.replace(/\/$/, "")}/api`
   : "/market-api";
 
 export async function getMarket(): Promise<MarketResponse> {
