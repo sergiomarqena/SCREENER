@@ -27,3 +27,17 @@ class MexcPublicClient:
             funding = float(item["fundingRate"]) if item.get("fundingRate") is not None else None
             return {"symbol":str(item.get("symbol","")),"lastPrice":price,"change24h":change,"volume24h":turnover,"openInterest":oi,"fundingRate":funding,"high24h":float(item["high24Price"]) if item.get("high24Price") is not None else None,"low24h":float(item["lower24Price"]) if item.get("lower24Price") is not None else None,"source":"MEXC Futures","updatedAt":datetime.now(timezone.utc).isoformat(),"priceChange1m":None,"priceChange5m":None,"rvol5m":None,"oiChange5m":None,"cvd5m":None}
         except (TypeError, ValueError): return None
+
+    async def candles(self, symbol: str, interval: str = "Min5", limit: int = 200) -> dict:
+        """Fetch public OHLCV candles for display and historical study."""
+        import time
+        seconds={"Min1":60,"Min5":300,"Min15":900,"Min60":3600,"Hour4":14400,"Day1":86400}[interval]
+        end=int(time.time())
+        start=end-seconds*limit
+        async with httpx.AsyncClient(timeout=10.0,headers={"User-Agent":"NORDVEX-Screener/0.1"}) as client:
+            response=await client.get(f"{self.base_url}/contract/kline/{symbol}",params={"interval":interval,"start":start,"end":end})
+            response.raise_for_status()
+            payload=response.json()
+        if not payload.get("success"):
+            raise RuntimeError("MEXC kline endpoint returned unsuccessful response")
+        return payload.get("data") or {}
