@@ -62,3 +62,22 @@ async def screener(limit:int=Query(100,ge=1,le=500),quote:str="USDT"):
             return {"source":"MEXC Futures public contract API","status":"degraded","updatedAt":datetime.now(timezone.utc).isoformat(),"items":[],"warning":global_error}
     items=[row for row in market_rows if not quote or row["symbol"].endswith(quote)]
     return {"source":"MEXC Futures public contract API","status":"live" if items else "degraded","updatedAt":last_update or datetime.now(timezone.utc).isoformat(),"items":items[:limit],"warning":last_error}
+
+@app.get("/api/market/candles/{symbol}")
+async def candles(symbol:str,interval:str=Query("Min5",pattern="^(Min1|Min5|Min15|Min60|Hour4|Day1)$"),limit:int=Query(200,ge=30,le=500)):
+    import re
+    if not re.fullmatch(r"[A-Z0-9]+_USDT",symbol):
+        from fastapi import HTTPException
+        raise HTTPException(status_code=422,detail="Symbol must be a valid BASE_USDT contract")
+    try:
+        data=await client.candles(symbol,interval,limit)
+        times=data.get("time",[])
+        fields=("open","high","low","close","vol","amount")
+        count=min([len(times)]+[len(data.get(k,[])) for k in fields])
+        points=[]
+        for i in range(count):
+            points.append({"time":int(times[i]),"open":float(data["open"][i]),"high":float(data["high"][i]),"low":float(data["low"][i]),"close":float(data["close"][i]),"volume":float(data["vol"][i]),"turnover":float(data["amount"][i])})
+        return {"symbol":symbol,"interval":interval,"source":"MEXC Futures","items":points}
+    except Exception as exc:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=503,detail={"message":"Unable to retrieve candle data","reason":str(exc)[:200]}) from exc
