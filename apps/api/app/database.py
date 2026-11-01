@@ -44,7 +44,7 @@ class MarketStore:
             return
         now = datetime.now(timezone.utc).replace(second=0, microsecond=0)
         records = [
-            (row["symbol"], now, row["price"], row.get("change24h"),
+            (row["symbol"], now, row["lastPrice"], row.get("change24h"),
              row.get("volume24h"), row.get("openInterest"), row.get("fundingRate"),
              row.get("high24h"), row.get("low24h"))
             for row in rows
